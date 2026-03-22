@@ -334,7 +334,7 @@ body {
 .loading-view.active {
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 14px;
 }
 
 @keyframes fadeIn {
@@ -732,6 +732,197 @@ input[type="range"].volume-slider::-moz-range-track {
   color: #2e2e2e;
   text-transform: uppercase;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* ── Idle view: button row ───────────────────────────────────────── */
+.btn-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.btn-row .tune-btn {
+  flex: 1;
+  width: auto;
+}
+.queue-btn {
+  padding: 12px 14px;
+  background: rgba(139, 26, 26, 0.07);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.queue-btn:hover {
+  background: rgba(139, 26, 26, 0.15);
+  color: var(--fg-accent);
+  border-color: var(--fg-accent);
+}
+
+/* ── Idle view: queue & history lists ───────────────────────────── */
+.list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.section-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.link-btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px;
+  color: var(--fg-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 1px;
+  padding: 2px 0;
+  transition: color 0.15s;
+}
+.link-btn:hover { color: var(--fg-accent); }
+
+.scroll-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 88px;
+  overflow-y: auto;
+}
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  width: 100%;
+  text-align: left;
+  cursor: default;
+  transition: background 0.15s, border-color 0.15s;
+}
+.list-item.clickable {
+  cursor: pointer;
+}
+.list-item.clickable:hover {
+  background: rgba(139, 26, 26, 0.1);
+  border-color: var(--fg-accent);
+}
+.item-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--fg-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.item-meta {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--fg-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.item-rm {
+  background: none;
+  border: none;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 0 2px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.item-rm:hover { color: var(--fg-accent); }
+
+/* ── Loading view: phase label + progress bar ───────────────────── */
+.load-title {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--fg-primary);
+  text-align: center;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.load-progress {
+  width: 76%;
+  height: 3px;
+  background: var(--load-track);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.load-bar {
+  height: 100%;
+  background: var(--load-color);
+  border-radius: 3px;
+  box-shadow: 0 0 8px var(--load-glow);
+  transition: width 0.35s ease;
+}
+
+/* ── Player: top-right actions (NEXT + ← NEW) ───────────────────── */
+.player-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.next-btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--fg-secondary);
+  background: none;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  padding: 3px 7px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.next-btn:hover { color: var(--fg-accent); border-color: var(--fg-accent); }
+
+.queue-badge {
+  color: var(--fg-dim);
+}
+
+/* ── Player: speed row ───────────────────────────────────────────── */
+.speed-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.speed-chip {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--fg-secondary);
+  background: transparent;
+  border: 1px solid var(--input-border);
+  border-radius: 3px;
+  padding: 3px 0;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  flex: 1;
+  text-align: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.speed-chip:hover {
+  border-color: var(--fg-accent);
+  color: var(--fg-accent);
+}
+.speed-chip.active {
+  background: rgba(139, 26, 26, 0.15);
+  border-color: var(--fg-accent);
+  color: var(--fg-accent);
 }
 
 /* ── Responsive – tablet / small desktop ─────────────────────────── */

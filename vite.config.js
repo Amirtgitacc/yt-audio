@@ -6,13 +6,28 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api':      'http://localhost:3000',
-      '/audio':    'http://localhost:3000',
-      '/download': 'http://localhost:3000',
+      // SSE endpoint — needs long timeout and no buffering
+      '/api/progress': {
+        target:       'http://localhost:3000',
+        changeOrigin: true,
+        timeout:      0,          // no timeout for long-lived SSE connections
+      },
+      '/api': {
+        target:       'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/audio': {
+        target:       'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/download': {
+        target:       'http://localhost:3000',
+        changeOrigin: true,
+      },
     },
   },
   build: {
-    outDir: 'dist',
+    outDir:     'dist',
     emptyOutDir: true,
   },
 });

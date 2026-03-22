@@ -11,6 +11,12 @@ function fmtDur(s) {
   return h ? `${h}h ${m}m` : m ? `${m}m ${sc}s` : `${sc}s`;
 }
 
+const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem('yt-history') || '[]'); } catch { return []; }
+}
+
 export default function App() {
   const [view, setView]               = useState('idle');
   const [url, setUrl]                 = useState('');
@@ -23,20 +29,40 @@ export default function App() {
   const [looping, setLooping]         = useState(false);
   const [volume, setVolume]           = useState(1);
   const [downloading, setDownloading] = useState(false);
+  const [speed, setSpeed]             = useState(1);
+  const [queue, setQueue]             = useState([]);
+  const [history, setHistory]         = useState(loadHistory);
+  const [loadPhase, setLoadPhase]     = useState('info');  // 'info' | 'download'
+  const [dlProgress, setDlProgress]   = useState(0);
 
-  const draggingRef = useRef(false);
-  const audioRef    = useRef(null);
-  const dlTimerRef  = useRef(null);
+  const draggingRef     = useRef(false);
+  const audioRef        = useRef(null);
+  const dlTimerRef      = useRef(null);
+  const evtSourceRef    = useRef(null);
+  // Refs so event handlers always see current values without stale closures
+  const queueRef        = useRef([]);
+  const loopingRef      = useRef(false);
+  const extractTrackRef = useRef(null);
 
-  // Status light: red=loading, blink=downloading, green=everything else
+  useEffect(() => { queueRef.current   = queue;   }, [queue]);
+  useEffect(() => { loopingRef.current = looping; }, [looping]);
+
   const statusClass = view === 'loading' ? 'red' : downloading ? 'blink' : 'green';
 
-  // Audio event listeners
+  // ── Audio event listeners ────────────────────────────────────────
   useEffect(() => {
     const audio = audioRef.current;
-    const onPlay     = () => setPlaying(true);
-    const onPause    = () => setPlaying(false);
-    const onEnded    = () => { setPlaying(false); setProgress(0); setCurTime(0); };
+    const onPlay  = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    const onEnded = () => {
+      setPlaying(false); setProgress(0); setCurTime(0);
+      // Auto-advance queue (skip if looping — audio.loop handles the repeat itself)
+      if (!loopingRef.current && queueRef.current.length > 0) {
+        const [next, ...rest] = queueRef.current;
+        setQueue(rest);
+        extractTrackRef.current?.(next.url);
+      }
+    };
     const onMetadata = () => setDur(audio.duration);
     const onTime     = () => {
       if (draggingRef.current || !audio.duration) return;
@@ -58,29 +84,88 @@ export default function App() {
     };
   }, []);
 
-  // Sync volume & loop to audio element
-  useEffect(() => { if (audioRef.current) audioRef.current.volume = volume; }, [volume]);
-  useEffect(() => { if (audioRef.current) audioRef.current.loop   = looping; }, [looping]);
+  // Sync audio properties
+  useEffect(() => { if (audioRef.current) audioRef.current.volume       = volume;  }, [volume]);
+  useEffect(() => { if (audioRef.current) audioRef.current.loop         = looping; }, [looping]);
+  useEffect(() => { if (audioRef.current) audioRef.current.playbackRate = speed;   }, [speed]);
 
-  // ── Handlers ────────────────────────────────────────────────────
-  async function extract() {
-    if (!url.trim()) { setError('ENTER A YOUTUBE URL'); return; }
+  // ── History helpers ──────────────────────────────────────────────
+  function addToHistory(trackData, trackUrl) {
+    setHistory(prev => {
+      const filtered = prev.filter(h => h.filename !== trackData.filename);
+      const next = [{ ...trackData, url: trackUrl }, ...filtered].slice(0, 10);
+      localStorage.setItem('yt-history', JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function clearHistory() {
+    setHistory([]);
+    localStorage.removeItem('yt-history');
+  }
+
+  // ── Main extraction ──────────────────────────────────────────────
+  async function extractTrack(targetUrl) {
+    if (evtSourceRef.current) { evtSourceRef.current.close(); evtSourceRef.current = null; }
     setError('');
     const audio = audioRef.current;
     audio.pause(); audio.src = '';
     setPlaying(false); setProgress(0); setCurTime(0); setDur(0);
     setView('loading');
+    setLoadPhase('info');
+    setDlProgress(0);
 
     try {
       const res  = await fetch('/api/extract', {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: url.trim() }),
+        body:    JSON.stringify({ url: targetUrl }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'EXTRACTION FAILED');
-      setTrack(data);
-      audio.src = data.audioUrl;
+
+      setTrack({ title: data.title, duration: data.duration, filename: data.filename });
+
+      if (data.cached) {
+        setTrack(data);
+        audio.src = data.audioUrl;
+        addToHistory(data, targetUrl);
+        setView('player');
+        return;
+      }
+
+      // Stream download progress via SSE
+      setLoadPhase('download');
+      await new Promise((resolve, reject) => {
+        const es = new EventSource(`/api/progress/${data.jobId}`);
+        evtSourceRef.current = es;
+
+        es.onmessage = e => {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'progress') {
+            setDlProgress(msg.percent);
+          } else if (msg.type === 'done') {
+            es.close(); evtSourceRef.current = null;
+            const full = {
+              title: data.title, duration: data.duration,
+              filename: data.filename, size: msg.size, audioUrl: msg.audioUrl,
+            };
+            setTrack(full);
+            audio.src = msg.audioUrl;
+            addToHistory(full, targetUrl);
+            resolve();
+          } else if (msg.type === 'error') {
+            es.close(); evtSourceRef.current = null;
+            reject(new Error(msg.message));
+          }
+        };
+
+        es.onerror = () => {
+          es.close(); evtSourceRef.current = null;
+          reject(new Error('Connection lost'));
+        };
+      });
+
       setView('player');
     } catch (err) {
       setError(err.message.toUpperCase());
@@ -88,7 +173,37 @@ export default function App() {
     }
   }
 
+  // Keep ref current every render so the onEnded handler can call it
+  extractTrackRef.current = extractTrack;
+
+  // ── Handlers ────────────────────────────────────────────────────
+  function extract() {
+    if (!url.trim()) { setError('ENTER A YOUTUBE URL'); return; }
+    extractTrack(url.trim());
+    setUrl('');
+  }
+
+  function addToQueue() {
+    if (!url.trim()) { setError('ENTER A YOUTUBE URL'); return; }
+    setQueue(q => [...q, { url: url.trim() }]);
+    setUrl('');
+    setError('');
+  }
+
+  function removeFromQueue(i) {
+    setQueue(q => q.filter((_, idx) => idx !== i));
+  }
+
+  function skipToNext() {
+    if (queueRef.current.length > 0) {
+      const [next, ...rest] = queueRef.current;
+      setQueue(rest);
+      extractTrack(next.url);
+    }
+  }
+
   function goBack() {
+    if (evtSourceRef.current) { evtSourceRef.current.close(); evtSourceRef.current = null; }
     const audio = audioRef.current;
     audio.pause(); audio.src = '';
     setPlaying(false); setProgress(0); setCurTime(0); setDur(0);
@@ -106,9 +221,7 @@ export default function App() {
     a.currentTime = Math.max(0, Math.min(a.duration, a.currentTime + seconds));
   }
 
-  function toggleLoop() {
-    setLooping(l => !l);
-  }
+  function toggleLoop() { setLooping(l => !l); }
 
   function handleDownload() {
     setDownloading(true);
@@ -129,8 +242,8 @@ export default function App() {
     if (a.duration) a.currentTime = (parseFloat(e.target.value) / 100) * a.duration;
   }
 
-  const seekStyle   = { background: `linear-gradient(to right, var(--sb-fill) ${progress}%, var(--sb-track) ${progress}%)` };
-  const volumeStyle = { background: `linear-gradient(to right, var(--sb-fill) ${volume * 100}%, var(--sb-track) ${volume * 100}%)` };
+  const seekStyle     = { background: `linear-gradient(to right, var(--sb-fill) ${progress}%, var(--sb-track) ${progress}%)` };
+  const volumeStyle   = { background: `linear-gradient(to right, var(--sb-fill) ${volume * 100}%, var(--sb-track) ${volume * 100}%)` };
 
   return (
     <div className="radio">
@@ -143,7 +256,6 @@ export default function App() {
           <span className="dot dot-g" />
         </div>
         <div className="top-mesh" />
-        {/* Status indicator light */}
         <div className={`status-light ${statusClass}`} />
       </div>
 
@@ -170,29 +282,89 @@ export default function App() {
               autoComplete="off"
               spellCheck={false}
             />
-            <button className="tune-btn" onClick={extract}>
-              <span className="btn-text">TUNE IN</span>
-            </button>
+            <div className="btn-row">
+              <button className="tune-btn" onClick={extract}>
+                <span className="btn-text">TUNE IN</span>
+              </button>
+              <button className="queue-btn" onClick={addToQueue} title="Add to queue">
+                + QUEUE
+              </button>
+            </div>
             {error && <div className="error-line">{error}</div>}
+
+            {/* Queue section */}
+            {queue.length > 0 && (
+              <div className="list-section">
+                <div className="section-hdr">
+                  <span className="tag">QUEUE ({queue.length})</span>
+                  <button className="link-btn" onClick={() => setQueue([])}>CLEAR</button>
+                </div>
+                <div className="scroll-list">
+                  {queue.map((item, i) => (
+                    <div key={i} className="list-item">
+                      <span className="item-label">{item.url}</span>
+                      <button className="item-rm" onClick={() => removeFromQueue(i)}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* History section */}
+            {history.length > 0 && (
+              <div className="list-section">
+                <div className="section-hdr">
+                  <span className="tag">RECENT</span>
+                  <button className="link-btn" onClick={clearHistory}>CLEAR</button>
+                </div>
+                <div className="scroll-list">
+                  {history.map((item, i) => (
+                    <button key={i} className="list-item clickable" onClick={() => extractTrack(item.url)}>
+                      <span className="item-label">{item.title}</span>
+                      {item.duration > 0 && <span className="item-meta">{fmtDur(item.duration)}</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <p className="hint-text">ENTER URL AND PRESS TUNE IN</p>
           </div>
 
           {/* Loading view */}
           <div className={`view loading-view${view === 'loading' ? ' active' : ''}`}>
             <div className="load-ring" />
-            <div className="load-label">TUNING...</div>
+            <div className="load-label">
+              {loadPhase === 'info' ? 'FETCHING INFO...' : `DOWNLOADING ${Math.round(dlProgress)}%`}
+            </div>
+            {loadPhase === 'download' && track?.title && (
+              <div className="load-title">{track.title}</div>
+            )}
+            {loadPhase === 'download' && (
+              <div className="load-progress">
+                <div className="load-bar" style={{ width: `${dlProgress}%` }} />
+              </div>
+            )}
           </div>
 
           {/* Player view */}
           <div className={`view${view === 'player' ? ' active' : ''}`}>
             <div className="screen-row">
               <span className="tag">Now Playing</span>
-              <button className="back-btn" onClick={goBack}>← NEW</button>
+              <div className="player-actions">
+                {queue.length > 0 && (
+                  <button className="next-btn" onClick={skipToNext} title="Skip to next in queue">
+                    NEXT ▶
+                  </button>
+                )}
+                <button className="back-btn" onClick={goBack}>← NEW</button>
+              </div>
             </div>
 
             <div className="track-name">{track?.title}</div>
             <div className="track-meta">
               {[track?.duration && fmtDur(track.duration), track?.size].filter(Boolean).join(' · ')}
+              {queue.length > 0 && <span className="queue-badge"> · {queue.length} queued</span>}
             </div>
 
             <div className={`waveform${playing ? ' playing' : ''}`}>
@@ -237,7 +409,7 @@ export default function App() {
               </button>
             </div>
 
-            {/* Progress bar */}
+            {/* Seek bar */}
             <div className="seek-row">
               <span className="time-lbl">{fmt(curTime)}</span>
               <input
@@ -265,6 +437,19 @@ export default function App() {
                 style={volumeStyle}
                 onChange={e => setVolume(parseFloat(e.target.value))}
               />
+            </div>
+
+            {/* Speed */}
+            <div className="speed-row">
+              {SPEEDS.map(s => (
+                <button
+                  key={s}
+                  className={`speed-chip${speed === s ? ' active' : ''}`}
+                  onClick={() => setSpeed(s)}
+                >
+                  {s}×
+                </button>
+              ))}
             </div>
 
             {/* Download */}
