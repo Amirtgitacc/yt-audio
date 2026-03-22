@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ffmpeg -version)",
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(curl -sv -X POST http://localhost:3000/api/extract -H \"Content-Type: application/json\" -d '{\"\"\"\"url\"\"\"\":\"\"\"\"https://www.youtube.com/watch?v=jNQXAC9IVRw\"\"\"\"}')",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

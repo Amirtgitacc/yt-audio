@@ -1,0 +1,618 @@
+/* ── CSS Variables ───────────────────────────────────────────────── */
+:root {
+  --page-bg:        #cfd3d8;
+
+  /* Screen – cream */
+  --screen-bg:      #f5efe0;
+  --screen-border:  #c8b89a;
+  --screen-glow:    rgba(120, 60, 20, 0.08);
+  --screen-inner:   rgba(139, 26, 26, 0.04);
+
+  /* Text – maroon */
+  --fg-primary:     #6b1212;
+  --fg-secondary:   #9a4040;
+  --fg-dim:         #b8a090;
+  --fg-accent:      #8b1a1a;
+
+  /* Input */
+  --input-bg:          #ede5d0;
+  --input-border:      #c8b89a;
+  --input-focus:       #8b1a1a;
+  --input-text:        #6b1212;
+  --input-placeholder: #b09878;
+
+  /* Tune button */
+  --btn-from:   #8b1a1a;
+  --btn-to:     #5a0f0f;
+  --btn-border: #7a1515;
+  --btn-text:   #f5e8d8;
+  --btn-shadow: rgba(139, 26, 26, 0.4);
+
+  /* Play button */
+  --play-from:   #a02020;
+  --play-to:     #5a0f0f;
+  --play-border: #8b1a1a;
+  --play-glow:   rgba(139, 26, 26, 0.45);
+  --play-color:  #f5e8d8;
+
+  /* Seekbar */
+  --sb-fill:  #8b1a1a;
+  --sb-track: #d4c4a8;
+  --sb-thumb: #8b1a1a;
+  --sb-glow:  rgba(139, 26, 26, 0.5);
+
+  /* Waveform */
+  --wb-rest: #c8b49a;
+  --wb-peak: #8b1a1a;
+  --wb-glow: rgba(139, 26, 26, 0.5);
+
+  /* Speaker mesh */
+  --mesh-bg:  #151515;
+  --mesh-dot: #363636;
+
+  /* Error */
+  --err-text:   #c02020;
+  --err-bg:     rgba(180, 30, 30, 0.08);
+  --err-border: rgba(180, 30, 30, 0.2);
+
+  /* Loading */
+  --load-color: #8b1a1a;
+  --load-track: rgba(139, 26, 26, 0.12);
+  --load-glow:  rgba(139, 26, 26, 0.3);
+}
+
+html[data-theme="dark"] {
+  --page-bg:       #0c0c0c;
+
+  --screen-bg:     #1c0e06;
+  --screen-border: #3a1a0a;
+  --screen-glow:   rgba(80, 20, 0, 0.2);
+  --screen-inner:  rgba(180, 60, 40, 0.04);
+
+  --fg-primary:    #e08060;
+  --fg-secondary:  #a04030;
+  --fg-dim:        #3a1a0a;
+  --fg-accent:     #c04040;
+
+  --input-bg:          #120a02;
+  --input-border:      #3a1a0a;
+  --input-focus:       #8b1a1a;
+  --input-text:        #e08060;
+  --input-placeholder: #3a1a0a;
+
+  --btn-from:   #701010;
+  --btn-to:     #400808;
+  --btn-border: #601010;
+  --btn-text:   #f0c8a8;
+  --btn-shadow: rgba(120, 20, 20, 0.5);
+
+  --play-from:   #901818;
+  --play-to:     #500c0c;
+  --play-border: #701515;
+  --play-glow:   rgba(160, 40, 40, 0.5);
+  --play-color:  #f0c8a8;
+
+  --sb-fill:  #c04040;
+  --sb-track: #2a1408;
+  --sb-thumb: #c04040;
+  --sb-glow:  rgba(200, 60, 60, 0.55);
+
+  --wb-rest: #3a1a0a;
+  --wb-peak: #c04040;
+  --wb-glow: rgba(200, 60, 60, 0.5);
+
+  --mesh-bg:  #0e0804;
+  --mesh-dot: #2a1e10;
+
+  --err-text:   #e04040;
+  --err-bg:     rgba(200, 40, 40, 0.08);
+  --err-border: rgba(200, 40, 40, 0.2);
+
+  --load-color: #c04040;
+  --load-track: rgba(200, 60, 60, 0.12);
+  --load-glow:  rgba(180, 40, 40, 0.35);
+}
+
+/* ── Reset & base ────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  background: var(--page-bg);
+  transition: background 0.35s ease;
+  height: 100%;
+}
+
+body {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 20px;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+#root {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* ── Radio shell ─────────────────────────────────────────────────── */
+.radio {
+  width: 100%;
+  max-width: 660px;
+  background: linear-gradient(165deg, #2e2e2e 0%, #191919 60%, #111 100%);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow:
+    0 40px 100px rgba(0, 0, 0, 0.65),
+    0 8px 24px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* ── Top bar ─────────────────────────────────────────────────────── */
+.radio-top {
+  background: linear-gradient(180deg, #1d1d1d 0%, #141414 100%);
+  border-bottom: 1px solid #0a0a0a;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  gap: 8px;
+}
+
+.indicator-dots { display: flex; gap: 7px; flex-shrink: 0; }
+
+.dot { width: 9px; height: 9px; border-radius: 50%; }
+.dot-r { background: #ff443a; box-shadow: 0 0 6px rgba(255, 68, 58, 0.75); }
+.dot-y { background: #ffd60a; box-shadow: 0 0 6px rgba(255, 214, 10, 0.75); }
+.dot-g { background: #30d158; box-shadow: 0 0 6px rgba(48, 209, 88, 0.75); }
+
+.top-mesh {
+  flex: 1;
+  height: 10px;
+  margin: 0 12px;
+  background-image: radial-gradient(circle, #383838 1.2px, transparent 1.2px);
+  background-size: 8px 8px;
+  border-radius: 5px;
+  opacity: 0.8;
+}
+
+.knob {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #5e5e5e, #1a1a1a);
+  border: 1.5px solid #0d0d0d;
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.7),
+    0 0 10px rgba(139, 26, 26, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+}
+.knob::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 1px;
+}
+
+/* ── Body row ────────────────────────────────────────────────────── */
+.radio-body {
+  display: flex;
+  padding: 20px;
+  gap: 16px;
+  align-items: stretch;
+}
+
+/* ── Speaker mesh panels ─────────────────────────────────────────── */
+.mesh-panel {
+  width: 72px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background-color: var(--mesh-bg);
+  background-image: radial-gradient(circle, var(--mesh-dot) 1.5px, transparent 1.5px);
+  background-size: 7px 7px;
+  box-shadow:
+    inset 0 0 14px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  transition: background-color 0.35s ease;
+}
+
+/* ── LCD Screen ──────────────────────────────────────────────────── */
+.screen {
+  flex: 1;
+  min-height: 320px;
+  background: var(--screen-bg);
+  border-radius: 10px;
+  border: 2px solid var(--screen-border);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--screen-border) 60%, transparent),
+    inset 0 0 40px var(--screen-glow),
+    0 0 20px var(--screen-glow);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.35s ease, border-color 0.35s ease;
+}
+
+/* Scanlines */
+.screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 10;
+  border-radius: 8px;
+}
+/* Inner accent border */
+.screen::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid var(--screen-inner);
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── Views ───────────────────────────────────────────────────────── */
+.view {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  padding: 20px 18px 18px;
+  position: relative;
+  z-index: 2;
+}
+.view.active {
+  display: flex;
+  animation: fadeIn 0.25s ease;
+}
+.loading-view.active {
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Shared screen elements ──────────────────────────────────────── */
+.tag {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--fg-secondary);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+}
+
+.screen-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+/* ── Idle view ───────────────────────────────────────────────────── */
+#root .view:first-of-type { gap: 10px; }
+
+.screen-input {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12.5px;
+  color: var(--input-text);
+  outline: none;
+  width: 100%;
+  caret-color: var(--fg-accent);
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.35s;
+}
+.screen-input::placeholder { color: var(--input-placeholder); }
+.screen-input:focus {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 1px rgba(139, 26, 26, 0.2), 0 0 12px rgba(139, 26, 26, 0.1);
+}
+
+.tune-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(180deg, var(--btn-from) 0%, var(--btn-to) 100%);
+  border: 1px solid var(--btn-border);
+  border-radius: 6px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 2.5px;
+  color: var(--btn-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  box-shadow: 0 2px 12px var(--btn-shadow);
+  transition: filter 0.15s, transform 0.1s;
+}
+.tune-btn:hover:not(:disabled) { filter: brightness(1.15); }
+.tune-btn:active:not(:disabled) { transform: scale(0.97); }
+.tune-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.error-line {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--err-text);
+  background: var(--err-bg);
+  border: 1px solid var(--err-border);
+  border-radius: 5px;
+  padding: 8px 11px;
+  line-height: 1.5;
+}
+
+.hint-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--fg-dim);
+  letter-spacing: 1px;
+  text-align: center;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+/* ── Loading view ────────────────────────────────────────────────── */
+.load-ring {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid var(--load-track);
+  border-top-color: var(--load-color);
+  animation: spin 0.9s linear infinite;
+  box-shadow: 0 0 18px var(--load-glow);
+}
+
+.load-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--fg-secondary);
+  letter-spacing: 3px;
+  animation: blink 1.1s step-end infinite;
+}
+
+@keyframes spin  { to { transform: rotate(360deg); } }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ── Player view ─────────────────────────────────────────────────── */
+.back-btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--fg-secondary);
+  background: none;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  padding: 3px 7px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.back-btn:hover { color: var(--fg-accent); border-color: var(--fg-accent); }
+
+.track-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg-primary);
+  line-height: 1.35;
+  margin: 2px 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-meta {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--fg-secondary);
+  margin-bottom: 14px;
+}
+
+/* ── Waveform ────────────────────────────────────────────────────── */
+.waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 36px;
+  margin-bottom: 12px;
+}
+
+.wb {
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--wb-rest);
+  transition: background 0.35s;
+}
+
+.waveform.playing .wb {
+  animation: wavepulse 0.65s ease-in-out infinite alternate;
+}
+.waveform.playing .wb:nth-child(1)  { animation-duration: .50s; animation-delay: .00s; }
+.waveform.playing .wb:nth-child(2)  { animation-duration: .70s; animation-delay: .05s; }
+.waveform.playing .wb:nth-child(3)  { animation-duration: .40s; animation-delay: .10s; }
+.waveform.playing .wb:nth-child(4)  { animation-duration: .85s; animation-delay: .15s; }
+.waveform.playing .wb:nth-child(5)  { animation-duration: .55s; animation-delay: .02s; }
+.waveform.playing .wb:nth-child(6)  { animation-duration: .45s; animation-delay: .20s; }
+.waveform.playing .wb:nth-child(7)  { animation-duration: .75s; animation-delay: .08s; }
+.waveform.playing .wb:nth-child(8)  { animation-duration: .60s; animation-delay: .18s; }
+.waveform.playing .wb:nth-child(9)  { animation-duration: .90s; animation-delay: .04s; }
+.waveform.playing .wb:nth-child(10) { animation-duration: .50s; animation-delay: .12s; }
+.waveform.playing .wb:nth-child(11) { animation-duration: .65s; animation-delay: .06s; }
+.waveform.playing .wb:nth-child(12) { animation-duration: .80s; animation-delay: .16s; }
+.waveform.playing .wb:nth-child(13) { animation-duration: .48s; animation-delay: .22s; }
+
+@keyframes wavepulse {
+  0%   { height: 4px;  background: var(--wb-rest); }
+  100% { height: 28px; background: var(--wb-peak); box-shadow: 0 0 7px var(--wb-glow); }
+}
+
+/* ── Play button ─────────────────────────────────────────────────── */
+.play-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 34%, var(--play-from), var(--play-to));
+  border: 1px solid var(--play-border);
+  box-shadow:
+    0 0 20px var(--play-glow),
+    0 3px 6px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  color: var(--play-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+.play-btn svg { width: 20px; height: 20px; }
+.play-btn:hover {
+  box-shadow:
+    0 0 30px var(--play-glow),
+    0 3px 6px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.play-btn:active { transform: scale(0.91); }
+
+/* ── Seekbar ─────────────────────────────────────────────────────── */
+.seek-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.time-lbl {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--fg-secondary);
+  white-space: nowrap;
+  min-width: 30px;
+}
+.time-lbl:last-child { text-align: right; }
+
+input[type="range"].seekbar {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"].seekbar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--sb-thumb);
+  box-shadow: 0 0 6px var(--sb-glow);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+input[type="range"].seekbar:hover::-webkit-slider-thumb { transform: scale(1.25); }
+input[type="range"].seekbar::-moz-range-thumb {
+  width: 13px; height: 13px;
+  border: none; border-radius: 50%;
+  background: var(--sb-thumb); cursor: pointer;
+}
+input[type="range"].seekbar::-moz-range-track {
+  height: 4px; border-radius: 4px;
+}
+
+/* ── Download button ─────────────────────────────────────────────── */
+.dl-btn {
+  display: block;
+  text-align: center;
+  padding: 10px;
+  background: rgba(139, 26, 26, 0.07);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--fg-secondary);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.dl-btn:hover {
+  background: rgba(139, 26, 26, 0.18);
+  color: var(--fg-accent);
+  border-color: var(--fg-accent);
+}
+
+/* ── Chrome bottom strip ─────────────────────────────────────────── */
+.radio-bottom {
+  background: linear-gradient(180deg, #7a7a7a 0%, #bcbcbc 45%, #8a8a8a 100%);
+  padding: 10px 20px 11px;
+  text-align: center;
+  border-top: 1px solid #606060;
+}
+
+.brand {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 3.5px;
+  color: #2e2e2e;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* ── Responsive – tablet / small desktop ─────────────────────────── */
+@media (max-width: 680px) {
+  .radio { border-radius: 18px; }
+  .radio-body { padding: 16px; gap: 12px; }
+  .mesh-panel { width: 52px; }
+  .screen { min-height: 300px; }
+}
+
+/* ── Responsive – large phones ───────────────────────────────────── */
+@media (max-width: 520px) {
+  body { padding: 16px 12px; }
+  .mesh-panel { display: none; }
+  .radio-body { padding: 14px; gap: 0; }
+  .radio { border-radius: 16px; max-width: 100%; }
+  .view { padding: 16px 14px 14px; }
+  .track-name { font-size: 14px; }
+  .play-btn { width: 48px; height: 48px; }
+}
+
+/* ── Responsive – small phones ───────────────────────────────────── */
+@media (max-width: 360px) {
+  body { padding: 10px 8px; }
+  .radio-top { height: 30px; padding: 0 12px; }
+  .radio-body { padding: 10px; }
+  .screen { min-height: 270px; }
+  .view { padding: 14px 12px 12px; }
+  .waveform { height: 28px; margin-bottom: 8px; }
+  .play-btn { width: 44px; height: 44px; }
+  .tune-btn { padding: 10px; font-size: 12px; }
+}
