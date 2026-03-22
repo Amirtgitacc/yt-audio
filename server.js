@@ -9,6 +9,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const AUDIO_DIR = path.join(__dirname, 'audio');
 
+// Use local binary downloaded during Railway build, fall back to system yt-dlp
+const LOCAL_YTDLP = path.join(__dirname, 'yt-dlp');
+const YTDLP = fs.existsSync(LOCAL_YTDLP) ? LOCAL_YTDLP : 'yt-dlp';
+
 fs.mkdirSync(AUDIO_DIR, { recursive: true });
 
 app.use(express.json());
@@ -35,7 +39,7 @@ function isValidYouTubeUrl(url) {
 
 function runYtDlp(args, timeoutMs = 300_000) {
   return new Promise((resolve, reject) => {
-    const proc = spawn('yt-dlp', args);
+    const proc = spawn(YTDLP, args);
     let stdout = '';
     let stderr = '';
 
@@ -66,7 +70,7 @@ function runYtDlp(args, timeoutMs = 300_000) {
     proc.on('error', err => {
       clearTimeout(timer);
       if (err.code === 'ENOENT') {
-        reject(new Error('yt-dlp is not installed. Run: pip install yt-dlp'));
+        reject(new Error('yt-dlp binary not found. Please check your installation.'));
       } else {
         reject(err);
       }
